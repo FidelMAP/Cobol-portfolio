@@ -1,0 +1,78 @@
+IDENTIFICATION DIVISION.
+       PROGRAM-ID. LOAN_CREATION.
+       AUTHOR. YOUR-NAME.
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT LOAN-FILE ASSIGN TO 'LOANS.DAT'
+               ORGANIZATION IS INDEXED
+               ACCESS MODE IS SEQUENTIAL
+               RECORD KEY IS LOAN-ID.
+
+       DATA DIVISION.
+       FILE SECTION.
+       FD  LOAN-FILE.
+       01  LOAN-RECORD.
+           05 LOAN-ID         PIC 9(6).
+           05 CLIENT-ID       PIC 9(6).
+           05 AMOUNT          PIC 9(9)V99.
+           05 INTEREST        PIC 9(5)V99.
+           05 TERM-MONTHS     PIC 9(3).
+           05 STATUS          PIC X(10).
+           05 PAID-MONTHS     PIC 9(3) VALUE 0.
+
+       WORKING-STORAGE SECTION.
+       01  WS-LOAN-ID         PIC 9(6) VALUE ZEROS.
+       01  WS-CLIENT-ID       PIC 9(6) VALUE ZEROS.
+       01  WS-AMOUNT          PIC 9(9)V99 VALUE ZEROS.
+       01  WS-INTEREST        PIC 9(5)V99 VALUE ZEROS.
+       01  WS-TERM            PIC 9(3) VALUE ZEROS.
+       01  WS-MESSAGE         PIC X(50).
+
+       PROCEDURE DIVISION.
+       BEGIN.
+           OPEN OUTPUT LOAN-FILE
+           DISPLAY 'LOAN CREATION MODULE INITIATED'
+           PERFORM CREATE-LOAN
+           CLOSE LOAN-FILE
+           STOP RUN.
+
+       CREATE-LOAN.
+           DISPLAY 'Enter Loan ID: '
+           ACCEPT WS-LOAN-ID
+           DISPLAY 'Enter Client ID: '
+           ACCEPT WS-CLIENT-ID
+           DISPLAY 'Enter Loan Amount: '
+           ACCEPT WS-AMOUNT
+           DISPLAY 'Enter Interest Rate (%): '
+           ACCEPT WS-INTEREST
+           DISPLAY 'Enter Term in Months: '
+           ACCEPT WS-TERM
+
+           * Validation: Loan amount must be positive
+           IF WS-AMOUNT <= 0
+               MOVE 'INVALID AMOUNT' TO WS-MESSAGE
+               DISPLAY WS-MESSAGE
+               STOP RUN
+           END-IF
+
+           * Validation: Term must be at least 1 month
+           IF WS-TERM < 1
+               MOVE 'INVALID TERM' TO WS-MESSAGE
+               DISPLAY WS-MESSAGE
+               STOP RUN
+           END-IF
+
+           * Initialize loan record
+           MOVE WS-LOAN-ID TO LOAN-ID
+           MOVE WS-CLIENT-ID TO CLIENT-ID
+           MOVE WS-AMOUNT TO AMOUNT
+           MOVE WS-INTEREST TO INTEREST
+           MOVE WS-TERM TO TERM-MONTHS
+           MOVE 'ACTIVE' TO STATUS
+           MOVE 0 TO PAID-MONTHS
+
+           * Write record to file
+           WRITE LOAN-RECORD
+           DISPLAY 'Loan successfully created for Client ID: ' CLIENT-ID
+           STOP RUN.
