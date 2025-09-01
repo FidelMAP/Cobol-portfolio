@@ -1,0 +1,38 @@
+IDENTIFICATION DIVISION.
+       PROGRAM-ID. LOAN_UPDATE_CICS.
+
+       LINKAGE SECTION.
+       01 LOAN-DATA.
+           05 LOAN-ID     PIC 9(6).
+           05 NEW-AMOUNT  PIC 9(9)V99.
+
+       WORKING-STORAGE SECTION.
+       01 WS-FS PIC XX.
+
+       FILE SECTION.
+       FD LOAN-FILE.
+       01 LOAN-RECORD.
+           05 LOAN-ID     PIC 9(6).
+           05 CLIENT-ID   PIC 9(6).
+           05 AMOUNT      PIC 9(9)V99.
+           05 INTEREST    PIC 9(3)V99.
+           05 TERM-MONTHS PIC 9(3).
+           05 STATUS      PIC X(10).
+           05 PAID-MONTHS PIC 9(3).
+
+       PROCEDURE DIVISION USING LOAN-DATA.
+       BEGIN.
+           *> READ existing loan
+           EXEC CICS READ FILE('LOANS') INTO(LOAN-RECORD) RIDFLD(LOAN-ID)
+           END-EXEC
+
+           *> UPDATE amount
+           MOVE NEW-AMOUNT TO LOAN-RECORD-AMOUNT
+
+           *> REWRITE record
+           EXEC CICS REWRITE FILE('LOANS') FROM(LOAN-RECORD) RIDFLD(LOAN-ID)
+           END-EXEC
+
+           EXEC CICS RETURN
+           END-EXEC
+           STOP RUN.
