@@ -1,0 +1,91 @@
+ IDENTIFICATION DIVISION.
+       PROGRAM-ID. LOAN_REPORT_ONLINE.
+       AUTHOR. YOUR-NAME.
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT LOAN-FILE ASSIGN TO 'LOANS.DAT'
+               ORGANIZATION IS INDEXED
+               ACCESS MODE IS DYNAMIC
+               RECORD KEY IS LOAN-ID
+               FILE STATUS IS WS-FS-LOAN.
+
+       DATA DIVISION.
+       FILE SECTION.
+       FD LOAN-FILE.
+       01 LOAN-RECORD.
+           05 LOAN-ID        PIC 9(6).
+           05 CLIENT-ID      PIC 9(6).
+           05 AMOUNT         PIC 9(9)V99.
+           05 INTEREST       PIC 9(3)V99.
+           05 TERM-MONTHS    PIC 9(3).
+           05 STATUS         PIC X(10).
+           05 PAID-MONTHS    PIC 9(3).
+
+       WORKING-STORAGE SECTION.
+       01 WS-LOAN-ID        PIC 9(6) VALUE 0.
+       01 WS-FS-LOAN        PIC XX.
+       01 WS-TOTAL-AMOUNT   PIC 9(12)V99 VALUE 0.
+       01 WS-COUNT          PIC 9(6) VALUE 0.
+       01 WS-AVERAGE        PIC 9(9)V99 VALUE 0.
+       01 WS-EOF            PIC X VALUE 'N'.
+           88 EOF-LOAN VALUE 'Y'.
+           88 NOT-EOF-LOAN VALUE 'N'.
+       01 WS-OPTION         PIC X VALUE 'N'.
+           88 SHOW-ALL VALUE 'A'.
+           88 FILTER-LOAN VALUE 'F'.
+
+       PROCEDURE DIVISION.
+           OPEN INPUT LOAN-FILE
+           
+           DISPLAY 'Do you want to (A) show all loans or (F) filter by Loan ID?'
+           ACCEPT WS-OPTION
+
+           IF SHOW-ALL
+               SET NOT-EOF-LOAN TO TRUE
+               PERFORM UNTIL EOF-LOAN
+                   READ LOAN-FILE
+                       AT END SET EOF-LOAN TO TRUE
+                       NOT AT END
+                           DISPLAY 'ID: ' LOAN-ID
+                           DISPLAY 'Client: ' CLIENT-ID
+                           DISPLAY 'Amount: ' AMOUNT
+                           DISPLAY 'Interest: ' INTEREST
+                           DISPLAY 'Term: ' TERM-MONTHS
+                           DISPLAY 'Paid Months: ' PAID-MONTHS
+                           DISPLAY 'Status: ' STATUS
+                           DISPLAY '---------------------------'
+
+                           ADD AMOUNT TO WS-TOTAL-AMOUNT
+                           ADD 1 TO WS-COUNT
+                   END-READ
+               END-PERFORM
+           ELSE IF FILTER-LOAN
+               DISPLAY 'Enter Loan ID to display: '
+               ACCEPT WS-LOAN-ID
+               READ LOAN-FILE KEY IS WS-LOAN-ID
+                   INVALID KEY DISPLAY 'Loan ID ' WS-LOAN-ID ' not found.'
+                   NOT INVALID KEY
+                       DISPLAY 'ID: ' LOAN-ID
+                       DISPLAY 'Client: ' CLIENT-ID
+                       DISPLAY 'Amount: ' AMOUNT
+                       DISPLAY 'Interest: ' INTEREST
+                       DISPLAY 'Term: ' TERM-MONTHS
+                       DISPLAY 'Paid Months: ' PAID-MONTHS
+                       DISPLAY 'Status: ' STATUS
+                       ADD AMOUNT TO WS-TOTAL-AMOUNT
+                       ADD 1 TO WS-COUNT
+               END-READ
+           END-IF
+
+           IF WS-COUNT > 0
+               COMPUTE WS-AVERAGE = WS-TOTAL-AMOUNT / WS-COUNT
+               DISPLAY 'Total loans: ' WS-COUNT
+               DISPLAY 'Total amount: ' WS-TOTAL-AMOUNT
+               DISPLAY 'Average amount: ' WS-AVERAGE
+           END-IF
+
+           CLOSE LOAN-FILE
+           DISPLAY 'Loan report session ended.'
+           STOP RUN.
