@@ -1,0 +1,59 @@
+IDENTIFICATION DIVISION.
+       PROGRAM-ID. LOAN_CREATION_BATCH.
+       AUTHOR. YOUR-NAME.
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT INPUT-LOANS ASSIGN TO 'INPUT_LOANS.DAT'
+               ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT LOAN-FILE ASSIGN TO 'LOANS.DAT'
+               ORGANIZATION IS LINE SEQUENTIAL
+               ACCESS MODE IS SEQUENTIAL.
+
+       DATA DIVISION.
+       FILE SECTION.
+       FD INPUT-LOANS.
+       01 INPUT-RECORD.
+           05 LOAN-ID-IN      PIC 9(6).
+           05 CLIENT-ID-IN    PIC 9(6).
+           05 AMOUNT-IN       PIC 9(9)V99.
+           05 INTEREST-IN     PIC 9(3)V99.
+           05 TERM-IN         PIC 9(3).
+
+       FD LOAN-FILE.
+       01 LOAN-RECORD.
+           05 LOAN-ID        PIC 9(6).
+           05 CLIENT-ID      PIC 9(6).
+           05 AMOUNT         PIC 9(9)V99.
+           05 INTEREST       PIC 9(3)V99.
+           05 TERM-MONTHS    PIC 9(3).
+           05 STATUS         PIC X(10) VALUE 'ACTIVE'.
+           05 PAID-MONTHS    PIC 9(3) VALUE 0.
+
+       WORKING-STORAGE SECTION.
+       01 WS-EOF          PIC X VALUE 'N'.
+           88 EOF VALUE 'Y'.
+           88 NOT-EOF VALUE 'N'.
+
+       PROCEDURE DIVISION.
+       BEGIN.
+           OPEN INPUT INPUT-LOANS
+           OPEN OUTPUT LOAN-FILE
+           PERFORM UNTIL EOF
+               READ INPUT-LOANS
+                   AT END SET EOF TO TRUE
+                   NOT AT END
+                       MOVE LOAN-ID-IN TO LOAN-ID
+                       MOVE CLIENT-ID-IN TO CLIENT-ID
+                       MOVE AMOUNT-IN TO AMOUNT
+                       MOVE INTEREST-IN TO INTEREST
+                       MOVE TERM-IN TO TERM-MONTHS
+                       MOVE 'ACTIVE' TO STATUS
+                       MOVE 0 TO PAID-MONTHS
+                       WRITE LOAN-RECORD
+               END-READ
+           END-PERFORM
+           CLOSE INPUT-LOANS
+           CLOSE LOAN-FILE
+           DISPLAY 'Batch loan creation completed.'
+           STOP RUN.
