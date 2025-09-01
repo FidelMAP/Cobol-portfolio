@@ -1,0 +1,87 @@
+IDENTIFICATION DIVISION.
+       PROGRAM-ID. LOAN_REPORT_BATCH.
+       AUTHOR. YOUR-NAME.
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT LOAN-FILE ASSIGN TO 'LOANS.DAT'
+               ORGANIZATION IS INDEXED
+               ACCESS MODE IS SEQUENTIAL
+               RECORD KEY IS LOAN-ID
+               FILE STATUS IS WS-FS-LOAN.
+           SELECT REPORT-FILE ASSIGN TO 'LOAN_REPORT_OUTPUT.DAT'
+               ORGANIZATION IS LINE SEQUENTIAL
+               FILE STATUS IS WS-FS-REPORT.
+
+       DATA DIVISION.
+       FILE SECTION.
+       FD LOAN-FILE.
+       01 LOAN-RECORD.
+           05 LOAN-ID        PIC 9(6).
+           05 CLIENT-ID      PIC 9(6).
+           05 AMOUNT         PIC 9(9)V99.
+           05 INTEREST       PIC 9(3)V99.
+           05 TERM-MONTHS    PIC 9(3).
+           05 STATUS         PIC X(10).
+           05 PAID-MONTHS    PIC 9(3).
+
+       FD REPORT-FILE.
+       01 REPORT-RECORD    PIC X(200).
+
+       WORKING-STORAGE SECTION.
+       01 WS-FS-LOAN        PIC XX.
+       01 WS-FS-REPORT      PIC XX.
+       01 WS-TOTAL-AMOUNT   PIC 9(12)V99 VALUE 0.
+       01 WS-COUNT          PIC 9(6) VALUE 0.
+       01 WS-AVERAGE        PIC 9(9)V99 VALUE 0.
+       01 WS-EOF            PIC X VALUE 'N'.
+           88 EOF-LOAN VALUE 'Y'.
+           88 NOT-EOF-LOAN VALUE 'N'.
+
+       PROCEDURE DIVISION.
+           OPEN INPUT LOAN-FILE
+           OPEN OUTPUT REPORT-FILE
+
+           SET NOT-EOF-LOAN TO TRUE
+
+           *> Leer todos los préstamos y generar reporte
+           PERFORM UNTIL EOF-LOAN
+               READ LOAN-FILE
+                   AT END SET EOF-LOAN TO TRUE
+                   NOT AT END
+                       STRING
+                           'ID: ' LOAN-ID
+                           ', Client: ' CLIENT-ID
+                           ', Amount: ' AMOUNT
+                           ', Interest: ' INTEREST
+                           ', Term: ' TERM-MONTHS
+                           ', Paid Months: ' PAID-MONTHS
+                           ', Status: ' STATUS
+                           INTO REPORT-RECORD
+                       END-STRING
+                       WRITE REPORT-RECORD
+
+                       ADD AMOUNT TO WS-TOTAL-AMOUNT
+                       ADD 1 TO WS-COUNT
+               END-READ
+           END-PERFORM
+
+           *> Calcular promedio
+           IF WS-COUNT > 0
+               COMPUTE WS-AVERAGE = WS-TOTAL-AMOUNT / WS-COUNT
+           END-IF
+
+           *> Escribir resumen estadístico
+           STRING 'Total loans: ' WS-COUNT
+                  ', Total amount: ' WS-TOTAL-AMOUNT
+                  ', Average amount: ' WS-AVERAGE
+                  INTO REPORT-RECORD
+           END-STRING
+           WRITE REPORT-RECORD
+
+           CLOSE LOAN-FILE
+           CLOSE REPORT-FILE
+
+           DISPLAY 'Loan report completed.'
+           STOP RUN.
