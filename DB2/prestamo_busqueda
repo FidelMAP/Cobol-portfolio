@@ -1,0 +1,43 @@
+IDENTIFICATION DIVISION.
+PROGRAM-ID. LOAN_QUERY_BATCH.
+ENVIRONMENT DIVISION.
+DATA DIVISION.
+WORKING-STORAGE SECTION.
+EXEC SQL
+   INCLUDE SQLCA
+END-EXEC.
+
+01 WS-CLIENT-ID PIC 9(6).
+01 WS-LOAN-ID   PIC 9(6).
+01 WS-AMOUNT    PIC 9(9)V99.
+01 WS-STATUS    PIC X(10).
+
+PROCEDURE DIVISION.
+    * Leer el cliente que queremos buscar desde fichero batch
+    OPEN INPUT CLIENT-FILE
+    READ CLIENT-FILE INTO WS-CLIENT-ID
+        AT END DISPLAY 'Fin de clientes'
+    END-READ.
+
+    * Cursor con condición de búsqueda por cliente
+    EXEC SQL
+       DECLARE C1 CURSOR FOR
+           SELECT LOAN_ID, AMOUNT, STATUS
+             FROM LOANS_TABLE
+            WHERE CLIENT_ID = :WS-CLIENT-ID
+    END-EXEC.
+
+    EXEC SQL OPEN C1 END-EXEC.
+
+    PERFORM UNTIL SQLCODE = 100
+        EXEC SQL FETCH C1 INTO :WS-LOAN-ID, :WS-AMOUNT, :WS-STATUS END-EXEC
+        IF SQLCODE = 0
+           DISPLAY 'Préstamo:' WS-LOAN-ID
+                   ' Importe:' WS-AMOUNT
+                   ' Estado:' WS-STATUS
+        END-IF
+    END-PERFORM.
+
+    EXEC SQL CLOSE C1 END-EXEC.
+    CLOSE CLIENT-FILE.
+    STOP RUN.
