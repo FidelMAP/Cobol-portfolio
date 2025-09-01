@@ -1,15 +1,21 @@
  IDENTIFICATION DIVISION.
        PROGRAM-ID. LOAN_QUERY_BATCH.
        AUTHOR. YOUR-NAME.
+
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
            SELECT LOAN-FILE ASSIGN TO 'LOANS.DAT'
+               ORGANIZATION IS INDEXED
+               ACCESS MODE IS DYNAMIC
+               RECORD KEY IS LOAN-ID
+               FILE STATUS IS WS-FS-LOAN.
+           SELECT QUERY-FILE ASSIGN TO 'LOAN_QUERY_INPUT.DAT'
                ORGANIZATION IS LINE SEQUENTIAL
-               ACCESS MODE IS SEQUENTIAL.
-           SELECT QUERY-FILE ASSIGN TO 'QUERY_CLIENTS.DAT'
+               FILE STATUS IS WS-FS-QUERY.
+           SELECT QUERY-RESULT-FILE ASSIGN TO 'LOAN_QUERY_OUTPUT.DAT'
                ORGANIZATION IS LINE SEQUENTIAL
-               ACCESS MODE IS SEQUENTIAL.
+               FILE STATUS IS WS-FS-RESULT.
 
        DATA DIVISION.
        FILE SECTION.
@@ -25,52 +31,65 @@
 
        FD QUERY-FILE.
        01 QUERY-RECORD.
-           05 CLIENT-ID-IN   PIC 9(6).
+           05 QUERY-LOAN-ID  PIC 9(6).
+
+       FD QUERY-RESULT-FILE.
+       01 RESULT-RECORD REDEFINES LOAN-RECORD.
 
        WORKING-STORAGE SECTION.
-       01 WS-CLIENT-ID    PIC 9(6).  *> ID del cliente que se está procesando
-       01 WS-EOF-QUERY    PIC X VALUE 'N'.
+       01 WS-FS-LOAN        PIC XX.
+       01 WS-FS-QUERY       PIC XX.
+       01 WS-FS-RESULT      PIC XX.
+       01 WS-EOF-QUERY      PIC X VALUE 'N'.
            88 EOF-QUERY VALUE 'Y'.
            88 NOT-EOF-QUERY VALUE 'N'.
-       01 WS-EOF-LOAN     PIC X VALUE 'N'.
-           88 EOF-LOAN VALUE 'Y'.
-           88 NOT-EOF-LOAN VALUE 'N'.
+       01 WS-EOF-RESULT     PIC X VALUE 'N'.
+           88 EOF-RESULT VALUE 'Y'.
+           88 NOT-EOF-RESULT VALUE 'N'.
 
        PROCEDURE DIVISION.
-       BEGIN.
+           OPEN I-O LOAN-FILE
            OPEN INPUT QUERY-FILE
+           OPEN OUTPUT QUERY-RESULT-FILE
 
+           SET NOT-EOF-QUERY TO TRUE
+
+           *> Procesar cada Loan ID del fichero de entrada
            PERFORM UNTIL EOF-QUERY
                READ QUERY-FILE
                    AT END SET EOF-QUERY TO TRUE
                    NOT AT END
-                       MOVE CLIENT-ID-IN TO WS-CLIENT-ID
-                       PERFORM PROCESS-CLIENT
+                       READ LOAN-FILE KEY IS QUERY-LOAN-ID
+                           INVALID KEY
+                               CONTINUE
+                           NOT INVALID KEY
+                               WRITE RESULT-RECORD
+                       END-READ
                END-READ
            END-PERFORM
 
            CLOSE QUERY-FILE
-           DISPLAY 'Batch loan query completed.'
-           STOP RUN.
+           CLOSE LOAN-FILE
+           CLOSE QUERY-RESULT-FILE
 
-       PROCESS-CLIENT.
-           OPEN INPUT LOAN-FILE
-           SET WS-EOF-LOAN TO FALSE
-           DISPLAY '--- Loans for Client ID: ' WS-CLIENT-ID ' ---'
-
-           PERFORM UNTIL WS-EOF-LOAN
-               READ LOAN-FILE
-                   AT END SET WS-EOF-LOAN TO TRUE
+           *> Mostrar solo los resultados finales
+           OPEN INPUT QUERY-RESULT-FILE
+           SET NOT-EOF-RESULT TO TRUE
+           PERFORM UNTIL EOF-RESULT
+               READ QUERY-RESULT-FILE
+                   AT END SET EOF-RESULT TO TRUE
                    NOT AT END
-                       IF CLIENT-ID = WS-CLIENT-ID
-                           DISPLAY 'Loan ID: ' LOAN-ID
-                           DISPLAY 'Amount: ' AMOUNT
-                           DISPLAY 'Interest: ' INTEREST
-                           DISPLAY 'Term (months): ' TERM-MONTHS
-                           DISPLAY 'Status: ' STATUS
-                           DISPLAY 'Paid Months: ' PAID-MONTHS
-                       END-IF
+                       DISPLAY 'ID: ' LOAN-ID
+                       DISPLAY 'Client: ' CLIENT-ID
+                       DISPLAY 'Amount: ' AMOUNT
+                       DISPLAY 'Interest: ' INTEREST
+                       DISPLAY 'Term: ' TERM-MONTHS
+                       DISPLAY 'Paid Months: ' PAID-MONTHS
+                       DISPLAY 'Status: ' STATUS
+                       DISPLAY '---------------------------'
                END-READ
            END-PERFORM
+           CLOSE QUERY-RESULT-FILE
 
-           CLOSE LOAN-FILE.
+           DISPLAY 'Loan query completed.'
+           STOP RUN.
