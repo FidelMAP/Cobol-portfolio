@@ -1,15 +1,19 @@
  IDENTIFICATION DIVISION.
-       PROGRAM-ID. LOAN_UPDATE_BATCH.
+       PROGRAM-ID. LOAN_UPDATE_BATCH_INDEXED.
        AUTHOR. YOUR-NAME.
+
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
-           SELECT LOAN-FILE ASSIGN TO 'LOANS.DAT'
+           SELECT LOAN-FILE ASSIGN TO 'LOANS.IDX'
+               ORGANIZATION IS INDEXED
+               ACCESS MODE IS DYNAMIC
+               RECORD KEY IS LOAN-ID
+               FILE STATUS IS WS-LOAN-FS.
+           SELECT UPDATE-FILE ASSIGN TO 'UPDATE_DATA.DAT'
                ORGANIZATION IS LINE SEQUENTIAL
                ACCESS MODE IS SEQUENTIAL
-               I-O.
-           SELECT PAYMENT-FILE ASSIGN TO 'PAYMENTS.DAT'
-               ORGANIZATION IS LINE SEQUENTIAL.
+               FILE STATUS IS WS-UPD-FS.
 
        DATA DIVISION.
        FILE SECTION.
@@ -23,57 +27,44 @@
            05 STATUS         PIC X(10).
            05 PAID-MONTHS    PIC 9(3).
 
-       FD PAYMENT-FILE.
-       01 PAYMENT-RECORD.
-           05 PAY-LOAN-ID    PIC 9(6).
-           05 NUM-PAYMENTS   PIC 9(3).
+       FD UPDATE-FILE.
+       01 UPDATE-RECORD.
+           05 UPD-LOAN-ID     PIC 9(6).
+           05 UPD-PAYMENTS    PIC 9(3).
 
        WORKING-STORAGE SECTION.
-       01 WS-EOF          PIC X VALUE 'N'.
-           88 EOF VALUE 'Y'.
-           88 NOT-EOF VALUE 'N'.
+       01 WS-EOF-UPDATE     PIC X VALUE 'N'.
+           88 EOF-UPDATE VALUE 'Y'.
+           88 NOT-EOF-UPDATE VALUE 'N'.
+       01 WS-LOAN-FS        PIC XX.
 
        PROCEDURE DIVISION.
        BEGIN.
            OPEN I-O LOAN-FILE
-           OPEN INPUT PAYMENT-FILE
-           PERFORM UNTIL EOF
-               READ PAYMENT-FILE
-                   AT END SET EOF TO TRUE
+           OPEN INPUT UPDATE-FILE
+
+           PERFORM UNTIL EOF-UPDATE
+               READ UPDATE-FILE
+                   AT END SET EOF-UPDATE TO TRUE
                    NOT AT END
-                       PERFORM UPDATE-LOAN
+                       PERFORM PROCESS-UPDATE
                END-READ
            END-PERFORM
+
            CLOSE LOAN-FILE
-           CLOSE PAYMENT-FILE
-           DISPLAY 'Batch loan update completed.'
+           CLOSE UPDATE-FILE
+           DISPLAY 'Batch indexed loan update completed.'
            STOP RUN.
 
-       UPDATE-LOAN.
-           * Buscar el préstamo correspondiente
-           READ LOAN-FILE
-               AT END DISPLAY 'Loan ID ' PAY-LOAN-ID ' not found'
-               NOT AT END
-                   IF LOAN-ID = PAY-LOAN-ID
-                       ADD NUM-PAYMENTS TO PAID-MONTHS
-                       IF PAID-MONTHS >= TERM-MONTHS
-                           MOVE 'CLOSED' TO STATUS
-                       END-IF
-                       REWRITE LOAN-RECORD
-                   ELSE
-                       * Mantener en bucle hasta encontrar el préstamo
-                       REPOSITION LOAN-FILE
-                       PERFORM UNTIL LOAN-ID = PAY-LOAN-ID OR EOF
-                           READ LOAN-FILE
-                               AT END SET EOF TO TRUE
-                           END-READ
-                       END-PERFORM
-                       IF NOT EOF
-                           ADD NUM-PAYMENTS TO PAID-MONTHS
-                           IF PAID-MONTHS >= TERM-MONTHS
-                               MOVE 'CLOSED' TO STATUS
-                           END-IF
-                           REWRITE LOAN-RECORD
-                       END-IF
+       PROCESS-UPDATE.
+           READ LOAN-FILE KEY IS UPD-LOAN-ID
+               INVALID KEY
+                   DISPLAY 'Loan ' UPD-LOAN-ID ' not found.'
+               NOT INVALID KEY
+                   ADD UPD-PAYMENTS TO PAID-MONTHS
+                   IF PAID-MONTHS >= TERM-MONTHS
+                       MOVE 'CLOSED' TO STATUS
                    END-IF
+                   REWRITE LOAN-RECORD
+                   DISPLAY 'Loan ' LOAN-ID ' updated successfully.'
            END-READ.
