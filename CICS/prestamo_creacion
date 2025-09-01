@@ -1,0 +1,44 @@
+IDENTIFICATION DIVISION.
+       PROGRAM-ID. LOAN_CREATION_CICS.
+
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       01 WS-FS          PIC XX.
+       01 WS-DUMMY       PIC X(100).
+
+       LINKAGE SECTION.
+       01 LOAN-DATA.
+           05 LOAN-ID     PIC 9(6).
+           05 CLIENT-ID   PIC 9(6).
+           05 AMOUNT      PIC 9(9)V99.
+           05 INTEREST    PIC 9(3)V99.
+           05 TERM-MONTHS PIC 9(3).
+
+       FILE SECTION.
+       FD LOAN-FILE.
+       01 LOAN-RECORD.
+           05 LOAN-ID     PIC 9(6).
+           05 CLIENT-ID   PIC 9(6).
+           05 AMOUNT      PIC 9(9)V99.
+           05 INTEREST    PIC 9(3)V99.
+           05 TERM-MONTHS PIC 9(3).
+           05 STATUS      PIC X(10).
+           05 PAID-MONTHS PIC 9(3).
+
+       PROCEDURE DIVISION USING LOAN-DATA.
+       BEGIN.
+           *> WRITE new loan record to VSAM file
+           MOVE LOAN-ID     TO LOAN-RECORD-LOAN-ID
+           MOVE CLIENT-ID   TO LOAN-RECORD-CLIENT-ID
+           MOVE AMOUNT      TO LOAN-RECORD-AMOUNT
+           MOVE INTEREST    TO LOAN-RECORD-INTEREST
+           MOVE TERM-MONTHS TO LOAN-RECORD-TERM-MONTHS
+           MOVE 'ACTIVE'   TO LOAN-RECORD-STATUS
+           MOVE 0          TO LOAN-RECORD-PAID-MONTHS
+
+           EXEC CICS WRITE FILE('LOANS') FROM(LOAN-RECORD) RIDFLD(LOAN-ID)
+           END-EXEC
+
+           EXEC CICS RETURN
+           END-EXEC
+           STOP RUN.
