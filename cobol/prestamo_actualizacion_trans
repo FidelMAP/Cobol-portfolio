@@ -1,0 +1,58 @@
+  IDENTIFICATION DIVISION.
+       PROGRAM-ID. LOAN_UPDATE_ONLINE.
+       AUTHOR. YOUR-NAME.
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT LOAN-FILE ASSIGN TO 'LOANS.DAT'
+               ORGANIZATION IS LINE SEQUENTIAL
+               ACCESS MODE IS I-O.
+
+       DATA DIVISION.
+       FILE SECTION.
+       FD LOAN-FILE.
+       01 LOAN-RECORD.
+           05 LOAN-ID        PIC 9(6).
+           05 CLIENT-ID      PIC 9(6).
+           05 AMOUNT         PIC 9(9)V99.
+           05 INTEREST       PIC 9(3)V99.
+           05 TERM-MONTHS    PIC 9(3).
+           05 STATUS         PIC X(10).
+           05 PAID-MONTHS    PIC 9(3).
+
+       WORKING-STORAGE SECTION.
+       01 WS-LOAN-ID      PIC 9(6).
+       01 WS-PAYMENTS     PIC 9(3).
+       01 WS-FOUND        PIC X VALUE 'N'.
+           88 FOUND VALUE 'Y'.
+           88 NOT-FOUND VALUE 'N'.
+
+       PROCEDURE DIVISION.
+       BEGIN.
+           OPEN I-O LOAN-FILE
+           DISPLAY 'LOAN UPDATE MODULE (ONLINE - FILES)'
+           DISPLAY 'Enter Loan ID to update: '
+           ACCEPT WS-LOAN-ID
+           DISPLAY 'Enter number of payments made: '
+           ACCEPT WS-PAYMENTS
+
+           PERFORM UNTIL FOUND
+               READ LOAN-FILE
+                   AT END
+                       DISPLAY 'Loan ID not found.'
+                       SET FOUND TO TRUE
+                   NOT AT END
+                       IF LOAN-ID = WS-LOAN-ID
+                           ADD WS-PAYMENTS TO PAID-MONTHS
+                           IF PAID-MONTHS >= TERM-MONTHS
+                               MOVE 'CLOSED' TO STATUS
+                           END-IF
+                           REWRITE LOAN-RECORD
+                           DISPLAY 'Loan updated successfully.'
+                           SET FOUND TO TRUE
+                       END-IF
+               END-READ
+           END-PERFORM
+
+           CLOSE LOAN-FILE
+           STOP RUN.
