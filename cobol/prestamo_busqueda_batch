@@ -1,0 +1,76 @@
+ IDENTIFICATION DIVISION.
+       PROGRAM-ID. LOAN_QUERY_BATCH.
+       AUTHOR. YOUR-NAME.
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT LOAN-FILE ASSIGN TO 'LOANS.DAT'
+               ORGANIZATION IS LINE SEQUENTIAL
+               ACCESS MODE IS SEQUENTIAL.
+           SELECT QUERY-FILE ASSIGN TO 'QUERY_CLIENTS.DAT'
+               ORGANIZATION IS LINE SEQUENTIAL
+               ACCESS MODE IS SEQUENTIAL.
+
+       DATA DIVISION.
+       FILE SECTION.
+       FD LOAN-FILE.
+       01 LOAN-RECORD.
+           05 LOAN-ID        PIC 9(6).
+           05 CLIENT-ID      PIC 9(6).
+           05 AMOUNT         PIC 9(9)V99.
+           05 INTEREST       PIC 9(3)V99.
+           05 TERM-MONTHS    PIC 9(3).
+           05 STATUS         PIC X(10).
+           05 PAID-MONTHS    PIC 9(3).
+
+       FD QUERY-FILE.
+       01 QUERY-RECORD.
+           05 CLIENT-ID-IN   PIC 9(6).
+
+       WORKING-STORAGE SECTION.
+       01 WS-CLIENT-ID    PIC 9(6).  *> ID del cliente que se está procesando
+       01 WS-EOF-QUERY    PIC X VALUE 'N'.
+           88 EOF-QUERY VALUE 'Y'.
+           88 NOT-EOF-QUERY VALUE 'N'.
+       01 WS-EOF-LOAN     PIC X VALUE 'N'.
+           88 EOF-LOAN VALUE 'Y'.
+           88 NOT-EOF-LOAN VALUE 'N'.
+
+       PROCEDURE DIVISION.
+       BEGIN.
+           OPEN INPUT QUERY-FILE
+
+           PERFORM UNTIL EOF-QUERY
+               READ QUERY-FILE
+                   AT END SET EOF-QUERY TO TRUE
+                   NOT AT END
+                       MOVE CLIENT-ID-IN TO WS-CLIENT-ID
+                       PERFORM PROCESS-CLIENT
+               END-READ
+           END-PERFORM
+
+           CLOSE QUERY-FILE
+           DISPLAY 'Batch loan query completed.'
+           STOP RUN.
+
+       PROCESS-CLIENT.
+           OPEN INPUT LOAN-FILE
+           SET WS-EOF-LOAN TO FALSE
+           DISPLAY '--- Loans for Client ID: ' WS-CLIENT-ID ' ---'
+
+           PERFORM UNTIL WS-EOF-LOAN
+               READ LOAN-FILE
+                   AT END SET WS-EOF-LOAN TO TRUE
+                   NOT AT END
+                       IF CLIENT-ID = WS-CLIENT-ID
+                           DISPLAY 'Loan ID: ' LOAN-ID
+                           DISPLAY 'Amount: ' AMOUNT
+                           DISPLAY 'Interest: ' INTEREST
+                           DISPLAY 'Term (months): ' TERM-MONTHS
+                           DISPLAY 'Status: ' STATUS
+                           DISPLAY 'Paid Months: ' PAID-MONTHS
+                       END-IF
+               END-READ
+           END-PERFORM
+
+           CLOSE LOAN-FILE.
