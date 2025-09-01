@@ -1,0 +1,73 @@
+IDENTIFICATION DIVISION.
+       PROGRAM-ID. LOAN_REPORT_CICS.
+
+       ENVIRONMENT DIVISION.
+       FILE-CONTROL.
+           SELECT LOAN-FILE ASSIGN TO 'LOANS.VSAM'
+               ORGANIZATION IS INDEXED
+               ACCESS MODE IS DYNAMIC
+               RECORD KEY IS LOAN-ID
+               FILE STATUS IS WS-FS.
+
+       DATA DIVISION.
+       FILE SECTION.
+       FD LOAN-FILE.
+       01 LOAN-RECORD.
+           05 LOAN-ID       PIC 9(6).
+           05 CLIENT-ID     PIC 9(6).
+           05 AMOUNT        PIC 9(9)V99.
+           05 INTEREST      PIC 9(3)V99.
+           05 TERM-MONTHS   PIC 9(3).
+           05 STATUS        PIC X(10).
+           05 PAID-MONTHS   PIC 9(3).
+
+       WORKING-STORAGE SECTION.
+       01 WS-FS          PIC XX.
+       01 EOF-FLAG       PIC X VALUE 'N'.
+       01 TOTAL-AMOUNT   PIC 9(9)V99 VALUE 0.
+       01 COUNT          PIC 9(5) VALUE 0.
+       01 AVG-AMOUNT     PIC 9(9)V99 VALUE 0.
+
+       01 RESULT-ARRAY.
+           05 RESULT-ENTRY OCCURS 50 TIMES.
+               10 R-LOAN-ID    PIC 9(6).
+               10 R-CLIENT-ID  PIC 9(6).
+               10 R-AMOUNT     PIC 9(9)V99.
+               10 R-STATUS     PIC X(10).
+
+       LINKAGE SECTION.
+       01 REPORT-CRITERIA.
+           05 CLIENT-ID-FILTER PIC 9(6) VALUE ZEROS. *> 0 = todos
+
+       PROCEDURE DIVISION USING REPORT-CRITERIA.
+           *> Inicializar
+           SET COUNT TO 0
+           SET TOTAL-AMOUNT TO 0
+
+           *> Leer registros secuencialmente
+           PERFORM UNTIL EOF-FLAG = 'Y' OR COUNT >= 50
+               EXEC CICS READ FILE('LOANS') INTO(LOAN-RECORD) NEXT
+                   NOTFOUND SET EOF-FLAG TO 'Y'
+               END-EXEC
+
+               *> Filtrar por cliente si se indica
+               IF CLIENT-ID-FILTER = 0 OR CLIENT-ID = CLIENT-ID-FILTER
+                   ADD 1 TO COUNT
+                   ADD AMOUNT TO TOTAL-AMOUNT
+                   MOVE LOAN-ID TO R-LOAN-ID(COUNT)
+                   MOVE CLIENT-ID TO R-CLIENT-ID(COUNT)
+                   MOVE AMOUNT TO R-AMOUNT(COUNT)
+                   MOVE STATUS TO R-STATUS(COUNT)
+               END-IF
+           END-PERFORM
+
+           *> Calcular promedio
+           IF COUNT > 0
+               COMPUTE AVG-AMOUNT = TOTAL-AMOUNT / COUNT
+           END-IF
+
+           *> Devolver resultados via COMMAREA (array + totales)
+           EXEC CICS RETURN COMMAREA(RESULT-ARRAY)
+           END-EXEC
+
+           STOP RUN.
