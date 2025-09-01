@@ -1,0 +1,68 @@
+ IDENTIFICATION DIVISION.
+       PROGRAM-ID. LOAN_QUERY_CICS.
+
+       ENVIRONMENT DIVISION.
+       FILE-CONTROL.
+           SELECT LOAN-FILE ASSIGN TO 'LOANS.VSAM'
+               ORGANIZATION IS INDEXED
+               ACCESS MODE IS DYNAMIC
+               RECORD KEY IS LOAN-ID
+               FILE STATUS IS WS-FS.
+
+       DATA DIVISION.
+       FILE SECTION.
+       FD LOAN-FILE.
+       01 LOAN-RECORD.
+           05 LOAN-ID       PIC 9(6).
+           05 CLIENT-ID     PIC 9(6).
+           05 AMOUNT        PIC 9(9)V99.
+           05 INTEREST      PIC 9(3)V99.
+           05 TERM-MONTHS   PIC 9(3).
+           05 STATUS        PIC X(10).
+           05 PAID-MONTHS   PIC 9(3).
+
+       WORKING-STORAGE SECTION.
+       01 WS-FS          PIC XX.
+       01 EOF-FLAG       PIC X VALUE 'N'.
+       01 WS-INDEX       PIC 9(3) VALUE 1.
+       01 MAX-RESULTS    PIC 9(3) VALUE 50.
+
+       01 RESULT-ARRAY.
+           05 RESULT-ENTRY OCCURS 50 TIMES.
+               10 R-LOAN-ID    PIC 9(6).
+               10 R-CLIENT-ID  PIC 9(6).
+               10 R-AMOUNT     PIC 9(9)V99.
+               10 R-STATUS     PIC X(10).
+
+       LINKAGE SECTION.
+       01 LOAN-DATA.
+           05 LOAN-ID-CRITERIA   PIC 9(6) VALUE ZEROS. *> si 0, ignorar filtro
+           05 CLIENT-ID-CRITERIA PIC 9(6) VALUE ZEROS.
+
+       PROCEDURE DIVISION USING LOAN-DATA.
+           *> Inicializar
+           SET WS-INDEX TO 1
+
+           *> Leer registros secuencialmente
+           PERFORM UNTIL EOF-FLAG = 'Y' OR WS-INDEX > MAX-RESULTS
+               EXEC CICS READ FILE('LOANS') INTO(LOAN-RECORD) NEXT
+                   NOTFOUND SET EOF-FLAG TO 'Y'
+               END-EXEC
+
+               *> Comprobar criterios de búsqueda
+               IF (LOAN-ID-CRITERIA = 0 OR LOAN-ID = LOAN-ID-CRITERIA)
+                  AND (CLIENT-ID-CRITERIA = 0 OR CLIENT-ID = CLIENT-ID-CRITERIA)
+                   *> Guardar en array de resultados
+                   MOVE LOAN-ID TO R-LOAN-ID(WS-INDEX)
+                   MOVE CLIENT-ID TO R-CLIENT-ID(WS-INDEX)
+                   MOVE AMOUNT TO R-AMOUNT(WS-INDEX)
+                   MOVE STATUS TO R-STATUS(WS-INDEX)
+                   ADD 1 TO WS-INDEX
+               END-IF
+           END-PERFORM
+
+           *> Devolver resultados via COMMAREA
+           EXEC CICS RETURN COMMAREA(RESULT-ARRAY)
+           END-EXEC
+
+           STOP RUN.
