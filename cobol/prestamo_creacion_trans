@@ -1,9 +1,9 @@
-IDENTIFICATION DIVISION.
-       PROGRAM-ID. LOAN_CREATION_TRANS.
-       AUTHOR. YOUR-NAME.
+       IDENTIFICATION DIVISION.
+           PROGRAM-ID. LOAN_CREATION_TRANS.
+           AUTHOR. YOUR-NAME.
        ENVIRONMENT DIVISION.
-       INPUT-OUTPUT SECTION.
-       FILE-CONTROL.
+        INPUT-OUTPUT SECTION.
+           FILE-CONTROL.
            SELECT LOAN-FILE ASSIGN TO 'LOANS.DAT'
                ORGANIZATION IS INDEXED
                ACCESS MODE IS SEQUENTIAL
@@ -18,7 +18,7 @@ IDENTIFICATION DIVISION.
            05 AMOUNT          PIC 9(9)V99.
            05 INTEREST        PIC 9(5)V99.
            05 TERM-MONTHS     PIC 9(3).
-           05 STATUS          PIC X(10).
+           05 STATUSS         PIC X(10).
            05 PAID-MONTHS     PIC 9(3) VALUE 0.
 
        WORKING-STORAGE SECTION.
@@ -48,30 +48,31 @@ IDENTIFICATION DIVISION.
            DISPLAY 'Enter Term in Months: '
            ACCEPT WS-TERM
 
-           * Validation: Loan amount must be positive
+      * Validation: Loan amount must be positive
            IF WS-AMOUNT <= 0
                MOVE 'INVALID AMOUNT' TO WS-MESSAGE
                DISPLAY WS-MESSAGE
                STOP RUN
            END-IF
 
-           * Validation: Term must be at least 1 month
+      * Validation: Term must be at least 1 month
            IF WS-TERM < 1
                MOVE 'INVALID TERM' TO WS-MESSAGE
                DISPLAY WS-MESSAGE
                STOP RUN
            END-IF
 
-           * Initialize loan record
+      * Initialize loan record
            MOVE WS-LOAN-ID TO LOAN-ID
            MOVE WS-CLIENT-ID TO CLIENT-ID
            MOVE WS-AMOUNT TO AMOUNT
            MOVE WS-INTEREST TO INTEREST
            MOVE WS-TERM TO TERM-MONTHS
-           MOVE 'ACTIVE' TO STATUS
+           MOVE 'ACTIVE' TO STATUSS
            MOVE 0 TO PAID-MONTHS
 
-           * Write record to file
+      * Write record to file
            WRITE LOAN-RECORD
            DISPLAY 'Loan successfully created for Client ID: ' CLIENT-ID
            STOP RUN.
+           
