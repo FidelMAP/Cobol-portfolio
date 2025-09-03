@@ -1,4 +1,4 @@
- IDENTIFICATION DIVISION.
+       IDENTIFICATION DIVISION.
        PROGRAM-ID. LOAN_QUERY_ONLINE.
        AUTHOR. YOUR-NAME.
 
@@ -20,7 +20,7 @@
            05 AMOUNT         PIC 9(9)V99.
            05 INTEREST       PIC 9(3)V99.
            05 TERM-MONTHS    PIC 9(3).
-           05 STATUS         PIC X(10).
+           05 STATUSS        PIC X(10).
            05 PAID-MONTHS    PIC 9(3).
 
        WORKING-STORAGE SECTION.
@@ -51,7 +51,7 @@
                            DISPLAY 'Interest: ' INTEREST
                            DISPLAY 'Term: ' TERM-MONTHS
                            DISPLAY 'Paid Months: ' PAID-MONTHS
-                           DISPLAY 'Status: ' STATUS
+                           DISPLAY 'Status: ' STATUSS
                            DISPLAY '---------------------------'
                    END-READ
                END-IF
