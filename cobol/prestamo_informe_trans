@@ -1,4 +1,4 @@
- IDENTIFICATION DIVISION.
+       IDENTIFICATION DIVISION.
        PROGRAM-ID. LOAN_REPORT_ONLINE.
        AUTHOR. YOUR-NAME.
 
@@ -20,7 +20,7 @@
            05 AMOUNT         PIC 9(9)V99.
            05 INTEREST       PIC 9(3)V99.
            05 TERM-MONTHS    PIC 9(3).
-           05 STATUS         PIC X(10).
+           05 STATUSS        PIC X(10).
            05 PAID-MONTHS    PIC 9(3).
 
        WORKING-STORAGE SECTION.
@@ -39,7 +39,7 @@
        PROCEDURE DIVISION.
            OPEN INPUT LOAN-FILE
            
-           DISPLAY 'Do you want to (A) show all loans or (F) filter by Loan ID?'
+           DISPLAY 'Do you want to (A) show all loans or (F) filter '
            ACCEPT WS-OPTION
 
            IF SHOW-ALL
@@ -54,7 +54,7 @@
                            DISPLAY 'Interest: ' INTEREST
                            DISPLAY 'Term: ' TERM-MONTHS
                            DISPLAY 'Paid Months: ' PAID-MONTHS
-                           DISPLAY 'Status: ' STATUS
+                           DISPLAY 'Status: ' STATUSS
                            DISPLAY '---------------------------'
 
                            ADD AMOUNT TO WS-TOTAL-AMOUNT
@@ -73,7 +73,7 @@
                        DISPLAY 'Interest: ' INTEREST
                        DISPLAY 'Term: ' TERM-MONTHS
                        DISPLAY 'Paid Months: ' PAID-MONTHS
-                       DISPLAY 'Status: ' STATUS
+                       DISPLAY 'Status: ' STATUSS
                        ADD AMOUNT TO WS-TOTAL-AMOUNT
                        ADD 1 TO WS-COUNT
                END-READ
@@ -89,3 +89,4 @@
            CLOSE LOAN-FILE
            DISPLAY 'Loan report session ended.'
            STOP RUN.
+           
