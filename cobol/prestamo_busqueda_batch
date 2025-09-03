@@ -1,4 +1,4 @@
- IDENTIFICATION DIVISION.
+       IDENTIFICATION DIVISION.
        PROGRAM-ID. LOAN_QUERY_BATCH.
        AUTHOR. YOUR-NAME.
 
@@ -19,6 +19,7 @@
 
        DATA DIVISION.
        FILE SECTION.
+       
        FD LOAN-FILE.
        01 LOAN-RECORD.
            05 LOAN-ID        PIC 9(6).
@@ -26,15 +27,24 @@
            05 AMOUNT         PIC 9(9)V99.
            05 INTEREST       PIC 9(3)V99.
            05 TERM-MONTHS    PIC 9(3).
-           05 STATUS         PIC X(10).
+           05 STATUSS        PIC X(10).
            05 PAID-MONTHS    PIC 9(3).
+          
+       01 RESULT-RECORD REDEFINES LOAN-RECORD.
+
+       FD QUERY-RESULT-FILE. 
+       01 RESULT-RECORD.
+           05 RLOAN-ID        PIC 9(6).
+           05 RCLIENT-ID      PIC 9(6).
+           05 RAMOUNT         PIC 9(9)V99.
+           05 RINTEREST       PIC 9(3)V99.
+           05 RTERM-MONTHS    PIC 9(3).
+           05 RSTATUSS        PIC X(10).
+           05 RPAID-MONTHS    PIC 9(3).
 
        FD QUERY-FILE.
        01 QUERY-RECORD.
            05 QUERY-LOAN-ID  PIC 9(6).
-
-       FD QUERY-RESULT-FILE.
-       01 RESULT-RECORD REDEFINES LOAN-RECORD.
 
        WORKING-STORAGE SECTION.
        01 WS-FS-LOAN        PIC XX.
@@ -63,7 +73,7 @@
                            INVALID KEY
                                CONTINUE
                            NOT INVALID KEY
-                               WRITE RESULT-RECORD
+                               WRITE QUERY-RESULT-FILE
                        END-READ
                END-READ
            END-PERFORM
@@ -85,7 +95,7 @@
                        DISPLAY 'Interest: ' INTEREST
                        DISPLAY 'Term: ' TERM-MONTHS
                        DISPLAY 'Paid Months: ' PAID-MONTHS
-                       DISPLAY 'Status: ' STATUS
+                       DISPLAY 'Status: ' STATUSS
                        DISPLAY '---------------------------'
                END-READ
            END-PERFORM
