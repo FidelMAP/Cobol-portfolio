@@ -1,4 +1,4 @@
- IDENTIFICATION DIVISION.
+       IDENTIFICATION DIVISION.
        PROGRAM-ID. LOAN_UPDATE_BATCH.
        AUTHOR. YOUR-NAME.
 
@@ -24,7 +24,7 @@
            05 AMOUNT         PIC 9(9)V99.
            05 INTEREST       PIC 9(3)V99.
            05 TERM-MONTHS    PIC 9(3).
-           05 STATUS         PIC X(10).
+           05 STATUSS        PIC X(10).
            05 PAID-MONTHS    PIC 9(3).
 
        FD UPDATE-FILE.
@@ -37,6 +37,7 @@
            88 EOF-UPDATE VALUE 'Y'.
            88 NOT-EOF-UPDATE VALUE 'N'.
        01 WS-LOAN-FS        PIC XX.
+       01 WS-UPD-FS         PIC XX.
 
        PROCEDURE DIVISION.
            OPEN I-O LOAN-FILE
@@ -62,7 +63,7 @@
                NOT INVALID KEY
                    ADD UPD-PAYMENTS TO PAID-MONTHS
                    IF PAID-MONTHS >= TERM-MONTHS
-                       MOVE 'CLOSED' TO STATUS
+                       MOVE 'CLOSED' TO STATUSS
                    END-IF
                    REWRITE LOAN-RECORD
                    DISPLAY 'Loan ' LOAN-ID ' updated successfully.'
