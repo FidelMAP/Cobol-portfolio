@@ -96,7 +96,42 @@ Este proyecto está pensado para **entornos Mainframe** y puede probarse parcial
 - Declarar las transacciones en CICS usando `CEDA` y ejecutar cada programa online usando el comando `EXEC CICS`.
 
 ### DB2
-- Los módulos con SQL embebido realizan consultas y actualizaciones sobre tablas simuladas con los ficheros de prueba.  
+- Los módulos con SQL embebido realizan consultas y actualizaciones sobre tablas simuladas con los ficheros de prueba.
+
+### Flujo de Trabajo del Proyecto
+
+```text
+        [Nuevo préstamo]
+        (loan_input.dat)
+               │
+               ▼
+        [Loan Creation]
+     (loan_creation.cbl)
+               │
+               ▼
+      [Ficheros maestro]
+      loans.dat / loan.idx
+               │
+   ┌───────────┴───────────┐
+   │                       │
+   ▼                       ▼
+[Loan Update]          [Loan Query]
+(loan_update.cbl)      (loan_query.cbl)
+(update_data.dat)      (loan_query_input.dat)
+   │                       │
+   ▼                       ▼
+[Actualización]       [Resultados búsqueda]
+   loans.dat           loan_query_output.dat
+   │
+   ▼
+[Loan Report]
+(loan_report.cbl)
+loan_report_output.dat
+   │
+   ▼
+[Opcional DB2]
+(SQL embebido)
+```
 
 ---
 
