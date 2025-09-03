@@ -1,4 +1,4 @@
-IDENTIFICATION DIVISION.
+       IDENTIFICATION DIVISION.
        PROGRAM-ID. LOAN_REPORT_BATCH.
        AUTHOR. YOUR-NAME.
 
@@ -23,7 +23,7 @@ IDENTIFICATION DIVISION.
            05 AMOUNT         PIC 9(9)V99.
            05 INTEREST       PIC 9(3)V99.
            05 TERM-MONTHS    PIC 9(3).
-           05 STATUS         PIC X(10).
+           05 STATUSS        PIC X(10).
            05 PAID-MONTHS    PIC 9(3).
 
        FD REPORT-FILE.
@@ -51,13 +51,20 @@ IDENTIFICATION DIVISION.
                    AT END SET EOF-LOAN TO TRUE
                    NOT AT END
                        STRING
-                           'ID: ' LOAN-ID
-                           ', Client: ' CLIENT-ID
-                           ', Amount: ' AMOUNT
-                           ', Interest: ' INTEREST
-                           ', Term: ' TERM-MONTHS
-                           ', Paid Months: ' PAID-MONTHS
-                           ', Status: ' STATUS
+                           'ID: '            DELIMITED BY SIZE 
+                           LOAN-ID           DELIMITED BY SIZE
+                           ', Client: '      DELIMITED BY SIZE
+                           CLIENT-ID         DELIMITED BY SIZE
+                           ', Amount: '      DELIMITED BY SIZE
+                           AMOUNT            DELIMITED BY SIZE
+                           ', Interest: '    DELIMITED BY SIZE 
+                           INTEREST          DELIMITED BY SIZE
+                           ', Term: '        DELIMITED BY SIZE 
+                           TERM-MONTHS       DELIMITED BY SIZE
+                           ', Paid Months: ' DELIMITED BY SIZE
+                           PAID-MONTHS       DELIMITED BY SIZE
+                           ', Status: '      DELIMITED BY SIZE
+                           STATUSS           DELIMITED BY SIZE 
                            INTO REPORT-RECORD
                        END-STRING
                        WRITE REPORT-RECORD
@@ -73,9 +80,12 @@ IDENTIFICATION DIVISION.
            END-IF
 
            *> Escribir resumen estadístico
-           STRING 'Total loans: ' WS-COUNT
-                  ', Total amount: ' WS-TOTAL-AMOUNT
-                  ', Average amount: ' WS-AVERAGE
+           STRING 'Total loans: '      DELIMITED BY SIZE
+                  WS-COUNT             DELIMITED BY SIZE
+                  ', Total amount: '   DELIMITED BY SIZE
+                  WS-TOTAL-AMOUNT      DELIMITED BY SIZE
+                  ', Average amount: ' DELIMITED BY SIZE
+                  WS-AVERAGE           DELIMITED BY SIZE
                   INTO REPORT-RECORD
            END-STRING
            WRITE REPORT-RECORD
